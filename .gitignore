@@ -1,0 +1,45 @@
+# --- secrets ---
+.env
+*.env
+!.env.example
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.uv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- project data / outputs (never commit raw media or big artifacts) ---
+data/
+outputs/
+runs/
+!data/.gitkeep
+!outputs/.gitkeep
+
+# --- model weights / caches ---
+weights/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+.cache/
+hf_cache/
+
+# --- editors / os ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- colab ---
+drive/

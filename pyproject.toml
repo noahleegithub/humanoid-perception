@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "humanoid-perception"
+version = "0.1.0"
+description = "Compare two phone recordings of the same indoor space and detect 3D changes (added / removed / moved objects)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Noah Lee" }]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "opencv-python-headless>=4.8",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.0",
+    "tqdm>=4.66",
+    "networkx>=3.2",
+    "matplotlib>=3.8",
+    "plotly>=5.20",
+]
+
+[project.optional-dependencies]
+# 3D rendering / point-cloud tooling used mainly for local (non-Colab) runs
+viz = ["open3d>=0.18"]
+# camera/geometry helpers
+geom = ["trimesh>=4.0", "transforms3d>=0.4"]
+# feed-forward reconstruction (run on Colab GPU)
+recon = ["torch>=2.3", "huggingface_hub>=0.23"]
+# classic SfM fallback (CPU)
+colmap = ["pycolmap>=3.9"]
+# open-vocabulary segmentation with SAM 3.1 (run on Colab GPU)
+semantics = ["torch>=2.3", "transformers>=4.50", "huggingface_hub>=0.23"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
+[project.scripts]
+hp = "hp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hp = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "gpu: tests that require a CUDA GPU and heavy model weights",
+    "slow: tests that are slow but CPU-runnable",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

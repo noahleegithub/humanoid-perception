@@ -1,0 +1,80 @@
+# Default pipeline configuration.
+# Override any field from the CLI with --set key.subkey=value, or pass --config path.yaml
+
+io:
+  # seconds between extracted candidate frames before keyframe selection
+  frame_stride_s: 0.5
+  # number of keyframes to keep per video (tuned to fit Colab T4 memory)
+  max_keyframes: 12
+  # reject frames whose Laplacian-variance sharpness is below this percentile of the video
+  min_sharpness_pct: 20
+  # resize the long side of frames before reconstruction
+  long_side: 518
+
+recon:
+  # gt | vggt | colmap
+  backend: gt
+  device: auto           # auto | cuda | cpu
+  # VGGT processes this many frames per forward pass (memory guard on 16GB T4)
+  frames_chunk_size: 6
+  # run the VRAM-efficient variant that discards unused intermediate layers
+  vram_efficient: true
+
+align:
+  # maximum iterations of (align -> detect -> re-align excluding changes)
+  iterations: 2
+  ransac_threshold_m: 0.08
+  icp_max_correspondence_m: 0.10
+  # minimum fraction of inliers required to trust an alignment
+  min_inlier_ratio: 0.25
+
+change:
+  # voxel resolution in metres
+  voxel_size: 0.06
+  # voxels smaller than this are dropped as noise
+  min_cluster_voxels: 60
+  # a voxel counts as occupied after this many surface observations
+  min_occ_obs: 2
+  # a voxel counts as observed-free after this many free-space observations
+  min_free_obs: 3
+  # suppress changes within this distance of a surface in the other (or own) scan;
+  # absorbs depth noise, sub-voxel registration error and grazing-ray artefacts
+  surface_band_m: 0.16
+  # depth truncation for free-space carving, metres
+  trunc_m: 0.06
+  # max ray length to carve free space, metres
+  max_ray_m: 9.0
+  # moved-object pairing constraints
+  moved_max_dist_m: 1.6
+  moved_max_volume_ratio: 2.5
+  # minimum appearance (colour) similarity to pair a removal with an addition
+  min_appearance: 0.55
+
+semantics:
+  enabled: true
+  # SAM 3.1 checkpoint (gated; requires HF_TOKEN with approved access)
+  sam3_model: facebook/sam3.1
+  device: auto
+  # number of best frames to run the labeler on per change
+  top_k_frames: 3
+  # minimum mask/presence score to accept a label
+  min_score: 0.4
+  # propagate masks across the video with the SAM 3.1 tracker
+  use_tracker: false
+  # optional MLLM captioning (off by default; template sentences otherwise)
+  captioner: template   # template | mllm
+
+viz:
+  backend: plotly       # plotly (Colab inline) | open3d (local)
+  max_points: 400000
+  point_size: 1.2
+  colors:
+    unchanged: [150, 150, 150]
+    added: [40, 200, 80]
+    removed: [220, 50, 50]
+    moved: [60, 120, 240]
+
+out:
+  dir: outputs
+  save_ply: true
+  save_report: true
