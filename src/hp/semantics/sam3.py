@@ -84,6 +84,7 @@ class Sam3Labeler:
         self._model: Any = None
         self._processor: Any = None
         self._backend: Optional[str] = None
+        self._loaded_model_id: Optional[str] = None
         self._torch: Any = None
         self._resolved_device: Optional[str] = None
 
@@ -115,18 +116,28 @@ class Sam3Labeler:
         self._resolved_device = self._resolve_device(torch)
         errors: list[str] = []
 
-        # Preferred backend: transformers' image PCS classes.
+        # Preferred backend: transformers' image PCS classes.  facebook/sam3.1
+        # ships as a video checkpoint, so if loading it fails we also try the
+        # image-PCS checkpoint facebook/sam3 (same SAM 3 family).
+        model_ids = [self.model_id]
+        if "sam3.1" in self.model_id:
+            model_ids.append("facebook/sam3")
         try:
             from transformers import Sam3Model, Sam3Processor
-
-            model = Sam3Model.from_pretrained(self.model_id)
-            model = model.to(self._resolved_device).eval()
-            processor = Sam3Processor.from_pretrained(self.model_id)
         except Exception as exc:  # noqa: BLE001 - report and fall through
-            errors.append(f"transformers: {type(exc).__name__}: {exc}")
+            errors.append(f"transformers import: {type(exc).__name__}: {exc}")
         else:
-            self._model, self._processor, self._backend = model, processor, "transformers"
-            return
+            for mid in model_ids:
+                try:
+                    model = Sam3Model.from_pretrained(mid)
+                    model = model.to(self._resolved_device).eval()
+                    processor = Sam3Processor.from_pretrained(mid)
+                except Exception as exc:  # noqa: BLE001 - report and try the next id
+                    errors.append(f"transformers[{mid}]: {type(exc).__name__}: {exc}")
+                    continue
+                self._model, self._processor, self._backend = model, processor, "transformers"
+                self._loaded_model_id = mid
+                return
 
         # Alternative backend: the official facebookresearch/sam3 repo.
         try:

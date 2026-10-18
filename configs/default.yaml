@@ -31,6 +31,8 @@ align:
 change:
   # voxel resolution in metres
   voxel_size: 0.06
+  # subsample the depth map by this factor when fusing (speed vs fidelity)
+  pixel_stride: 3
   # voxels smaller than this are dropped as noise
   min_cluster_voxels: 60
   # a voxel counts as occupied after this many surface observations

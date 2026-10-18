@@ -72,7 +72,7 @@ def _load_videos(video_a: str, video_b: str, cfg: Config) -> tuple[Scene, Scene]
 # ---------------------------------------------------------------------------
 def _fuse(scene_a: Scene, scene_b: Scene, cfg: Config) -> tuple[VoxelGrid, VoxelGrid]:
     voxel = float(cfg.change.get_path("voxel_size", 0.06))
-    stride = int(cfg.change.get_path("pixel_stride", 3)) if cfg.change.get_path("pixel_stride") else 3
+    stride = int(cfg.change.get_path("pixel_stride", 3))
     trunc = float(cfg.change.get_path("trunc_m", voxel))
     max_ray = float(cfg.change.get_path("max_ray_m", 9.0))
 
@@ -180,6 +180,17 @@ def compare_scenes(
     sim3, align_info = register_scenes(
         scene_a, scene_b, method=align_method, correspondences=correspondences
     )
+
+    min_inlier = float(cfg.align.get_path("min_inlier_ratio", 0.25))
+    inlier_ratio = align_info.get("inlier_ratio")
+    if inlier_ratio is not None and inlier_ratio < min_inlier:
+        import warnings
+
+        warnings.warn(
+            f"alignment inlier ratio {inlier_ratio:.2f} is below {min_inlier:.2f}; the two "
+            "scans may overlap poorly, so change results could contain false positives. "
+            "Consider re-recording with more overlap."
+        )
 
     a_aligned = align_scene(scene_a, sim3)
     clusters: list[ChangeCluster] = []
